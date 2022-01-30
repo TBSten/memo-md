@@ -13,7 +13,7 @@ import {
     useState,
 } from "react";
 import { Memo } from "lib/memo/types";
-import { getMemo, putMemo } from "lib/memo/client";
+import { getMemo, putMemo, removeMemos } from "lib/memo/client";
 import Loading from "components/Loading";
 
 import "zenn-content-css";
@@ -21,6 +21,8 @@ import Tabs from "components/Tabs";
 
 import { Editor, EditorState, ContentState } from "draft-js";
 import "draft-js/dist/Draft.css";
+import Button from "components/Button";
+import { useRouter } from "next/router";
 
 export interface MemoDetailProps {
     memoKey: string;
@@ -46,12 +48,16 @@ const MemoDetail: FC<MemoDetailProps> = ({ memoKey }) => {
             ),
         },
     ];
+    let defaultIdx = 0;
+    if (typeof location !== "undefined" && location.hash === "edit") {
+        defaultIdx = 1;
+    }
     useEffect(() => {
         fetchMemo(memoKey, setMemo);
     }, []);
     return (
         <Layout title={memo ? memo.title : "Loading ..."}>
-            {memo ? <Tabs tabs={tabs} /> : <Loading />}
+            {memo ? <Tabs tabs={tabs} defaultIdx={defaultIdx} /> : <Loading />}
         </Layout>
     );
 };
@@ -111,29 +117,13 @@ function useEditorStateWidthMemo(memo: Memo) {
     return [editorState, setEditorState] as const;
 }
 
-function SaveButton(props:HTMLAttributes<HTMLButtonElement> & {savable:boolean}) {
-    return (
-        <button
-            className={`transition-all active:opacity-50 active:scale-105  py-1 px-3 rounded-lg 
-                    ${
-                        props.savable
-                            ? "bg-indigo-500 text-white"
-                            : "bg-gray-300 text-gray-900"
-                    }`}
-            disabled={!props.savable}
-            {...props}
-        >
-            保存
-        </button>
-    );
-}
 function Edit({ memo, onChange }: EditProps) {
-    const [savable, setSavable] = useState(true);
-    const [editorEnable, setEditorEnable] = useState(false);
-    //mdContent
-    const [editorState, setEditorState] = useEditorStateWidthMemo(memo);
+    const [loading, setLoading] = useState(false);
+    const router = useRouter() ;
     const [title, setTitle] = useState(memo.title);
     const [author, setAuthor] = useState(memo.author);
+    const [editorState, setEditorState] = useEditorStateWidthMemo(memo);
+    const [editorEnable, setEditorEnable] = useState(false);
     const handleChangeMdContent = (es: EditorState) => {
         setEditorState(es);
         const mdContent = es.getCurrentContent().getPlainText();
@@ -148,23 +138,32 @@ function Edit({ memo, onChange }: EditProps) {
         onChange({ ...memo, author: e.target.value });
     };
     const handleSave = useCallback(async () => {
-        if (savable) {
-            setSavable(false);
+        if (!loading) {
+            setLoading(true);
             const updatedMemo = {
                 ...memo,
                 mdContent: editorState.getCurrentContent().getPlainText(),
             };
             console.log("save", updatedMemo);
             await putMemo(updatedMemo);
-            setSavable(true);
+            setLoading(false);
         }
     }, [memo]);
+    const handleRemove = useCallback(async ()=>{
+        if(!loading){
+            setLoading(true);
+            await removeMemos([memo.key]);
+            router.push(`/`);
+            setLoading(false);
+        }
+    },[memo.key]);
     useEffect(() => {
         setEditorEnable(true);
     }, []);
     return (
         <div className="p-2">
-            <SaveButton savable={savable} onClick={handleSave}/>
+            <Button onClick={handleSave} disabled={loading}>保存</Button>
+            <Button onClick={handleRemove} disabled={loading}>削除</Button>
 
             <div>
                 タイトル

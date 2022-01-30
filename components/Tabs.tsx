@@ -6,10 +6,11 @@ export interface TabsProps {
         label: ReactNode;
         comp: ReactNode;
     }[];
+    defaultIdx :number;
 }
 
-const Tabs: FC<TabsProps> = ({ tabs }) => {
-    const [idx, setIdx] = useState(0);
+const Tabs: FC<TabsProps> = ({ tabs , defaultIdx }) => {
+    const [idx, setIdx] = useState( defaultIdx );
     return (
         <div>
             <div className="flex ml-2 bg-white w-fit max-w-full">

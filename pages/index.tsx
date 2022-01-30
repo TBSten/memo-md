@@ -55,7 +55,7 @@ const MemoLink = ({
                         selected
                             ? "bg-green-200 border-green-600"
                             : "bg-blue-200 border-blue-200"
-                    } active:scale-105 transition-all `}
+                    } active:opacity-50 transition-all `}
                     onClick={onClick}
                     // {...longPress}
                 >
@@ -142,7 +142,7 @@ const Top: FC<TopProps> = ({}) => {
                 ) : (
                     <>
                         <li
-                            className="p-2 bg-blue-200 active:scale-105 transition-all flex justify-center items-center text-6xl text-white "
+                            className="p-2 bg-blue-200 active:opacity-50 transition-all flex justify-center items-center text-6xl text-white "
                             onClick={handleNew}
                         >
                             +
