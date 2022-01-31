@@ -1,3 +1,4 @@
+import Button from "components/Button";
 import Layout from "components/Layout";
 import Loading from "components/Loading";
 import LoadingDialog from "components/LoadingDialog";
@@ -51,7 +52,7 @@ const MemoLink = ({
                 }}
             >
                 <li
-                    className={`p-2 border-4 ${
+                    className={`p-2 border-4 w-full h-full break-words ${
                         selected
                             ? "bg-green-200 border-green-600"
                             : "bg-blue-200 border-blue-200"
@@ -60,7 +61,9 @@ const MemoLink = ({
                     // {...longPress}
                 >
                     <h3 className="text-2xl flex justify-between">
-                        <span className="max-w-90per">{memo.title}</span>
+                        <span className="max-w-90per">
+                            {memo.title.substring(0,20)}
+                        </span>
                         <input
                             type="checkbox"
                             className="w-6 h-6"
@@ -69,7 +72,7 @@ const MemoLink = ({
                             onClick={e=>{e.stopPropagation();}}
                         />
                     </h3>
-                    <h4>{memo.author}</h4>
+                    <h4>{memo.author.substring(0,20)}</h4>
                     <h4>{new Date(memo.created_at).toLocaleString()}</h4>
                 </li>
             </a>
@@ -86,9 +89,7 @@ const Top: FC<TopProps> = ({}) => {
             const memos = await getMemos();
             setMemos(memos);
             if (isContinue) {
-                setTimeout(() => {
-                    fetchMemos();
-                }, 1 * 1000);
+                setTimeout( fetchMemos , 1 * 1000);
             }
         }
         fetchMemos();
@@ -104,7 +105,7 @@ const Top: FC<TopProps> = ({}) => {
         };
         const memo = await putMemo(newMemo);
         if (memo.key) {
-            router.push(`/memo/${memo.key}`);
+            await router.push(`/memo/${memo.key}`);
         }
         setOpenDialog(false)
     };
@@ -125,11 +126,19 @@ const Top: FC<TopProps> = ({}) => {
             ))} */}
             {selectMemos.length > 0 ? 
             <div>
-                <button className="p-2 bg-blue-600 text-white" onClick={handleRemove}>DELETE</button>
+                <Button onClick={handleRemove}>
+                    削除
+                </Button>
+                <Button onClick={()=>setSelectMemos(memos.map(memo=>memo.key))}>
+                    全選択
+                </Button>
+                <Button onClick={()=>setSelectMemos([])}>
+                    選択解除
+                </Button>
             </div>
             :
             ""}
-            <ul className="list-none p-1 grid grid-cols-2 gap-4">
+            <ul className="list-none p-1 grid grid-cols-2 md:grid-cols-4 gap-4">
                 {memos === null ? (
                     <Loading />
                 ) : memos.length <= 0 ? (
@@ -142,7 +151,7 @@ const Top: FC<TopProps> = ({}) => {
                 ) : (
                     <>
                         <li
-                            className="p-2 bg-blue-200 active:opacity-50 transition-all flex justify-center items-center text-6xl text-white "
+                            className="p-2 bg-blue-200 active:opacity-50 transition-all flex justify-center items-center text-6xl text-white cursor-pointer"
                             onClick={handleNew}
                         >
                             +

@@ -20,6 +20,7 @@ const handler: NextApiHandler = apiHandler(async (req, res) => {
                 author,
                 mdContent,
             });
+            console.log("test");
             res.json({
                 msg: "ok",
                 memo: puttedMemo,

@@ -23,6 +23,7 @@ import { Editor, EditorState, ContentState } from "draft-js";
 import "draft-js/dist/Draft.css";
 import Button from "components/Button";
 import { useRouter } from "next/router";
+import LoadingDialog from "components/LoadingDialog";
 
 export interface MemoDetailProps {
     memoKey: string;
@@ -36,6 +37,10 @@ async function fetchMemo(memoKey: string, setMemo: (memo: Memo) => any) {
 
 const MemoDetail: FC<MemoDetailProps> = ({ memoKey }) => {
     const [memo, setMemo] = useState<null | Memo>(null);
+    let defaultIdx = 0;
+    if (typeof location !== "undefined" && location.hash === "edit") {
+        defaultIdx = 1;
+    }
     const tabs = [
         {
             label: "閲覧",
@@ -48,16 +53,21 @@ const MemoDetail: FC<MemoDetailProps> = ({ memoKey }) => {
             ),
         },
     ];
-    let defaultIdx = 0;
-    if (typeof location !== "undefined" && location.hash === "edit") {
-        defaultIdx = 1;
-    }
     useEffect(() => {
         fetchMemo(memoKey, setMemo);
     }, []);
+    const [tabIdx,setTabIdx] = useState(0) ;
     return (
         <Layout title={memo ? memo.title : "Loading ..."}>
-            {memo ? <Tabs tabs={tabs} defaultIdx={defaultIdx} /> : <Loading />}
+            {memo ? 
+                <Tabs 
+                    idx={tabIdx}
+                    onChange={(idx)=>setTabIdx(idx)}
+                    tabs={tabs} 
+                    defaultIdx={defaultIdx}
+                /> 
+                : 
+                <Loading />}
         </Layout>
     );
 };
@@ -118,8 +128,9 @@ function useEditorStateWidthMemo(memo: Memo) {
 }
 
 function Edit({ memo, onChange }: EditProps) {
+    useEffect(() => console.log("memo changed", memo), [memo]);
     const [loading, setLoading] = useState(false);
-    const router = useRouter() ;
+    const router = useRouter();
     const [title, setTitle] = useState(memo.title);
     const [author, setAuthor] = useState(memo.author);
     const [editorState, setEditorState] = useEditorStateWidthMemo(memo);
@@ -127,43 +138,49 @@ function Edit({ memo, onChange }: EditProps) {
     const handleChangeMdContent = (es: EditorState) => {
         setEditorState(es);
         const mdContent = es.getCurrentContent().getPlainText();
-        onChange({ ...memo, mdContent });
+        // onChange({ ...memo, mdContent });
     };
     const handleChangeTitle: ChangeEventHandler<HTMLInputElement> = (e) => {
         setTitle(e.target.value);
-        onChange({ ...memo, title: e.target.value });
+        // onChange({ ...memo, title: e.target.value });
     };
     const handleChangeAuthor: ChangeEventHandler<HTMLInputElement> = (e) => {
         setAuthor(e.target.value);
-        onChange({ ...memo, author: e.target.value });
+        // onChange({ ...memo, author: e.target.value });
     };
-    const handleSave = useCallback(async () => {
+    const handleSave = async () => {
         if (!loading) {
             setLoading(true);
             const updatedMemo = {
                 ...memo,
+                title,
+                author,
                 mdContent: editorState.getCurrentContent().getPlainText(),
             };
-            console.log("save", updatedMemo);
-            await putMemo(updatedMemo);
+            const newMemo = await putMemo(updatedMemo);
+            onChange(newMemo);
             setLoading(false);
         }
-    }, [memo]);
-    const handleRemove = useCallback(async ()=>{
-        if(!loading){
+    };
+    const handleRemove = useCallback(async () => {
+        if (!loading) {
             setLoading(true);
             await removeMemos([memo.key]);
             router.push(`/`);
             setLoading(false);
         }
-    },[memo.key]);
+    }, [memo.key]);
     useEffect(() => {
         setEditorEnable(true);
     }, []);
     return (
         <div className="p-2">
-            <Button onClick={handleSave} disabled={loading}>保存</Button>
-            <Button onClick={handleRemove} disabled={loading}>削除</Button>
+            <Button onClick={handleSave} disabled={loading}>
+                保存
+            </Button>
+            <Button onClick={handleRemove} disabled={loading}>
+                削除
+            </Button>
 
             <div>
                 タイトル
@@ -190,6 +207,24 @@ function Edit({ memo, onChange }: EditProps) {
                     )}
                 </div>
             </div>
+
+            <Button onClick={handleSave} disabled={loading}>
+                保存
+            </Button>
+            <Button onClick={handleRemove} disabled={loading}>
+                削除
+            </Button>
+
+            <div className="fixed right-3 bottom-3 z-10">
+                <button
+                    className="bg-indigo-800 text-white p-2 text-3xl rounded-full shadow-md hover:shadow-2xl shadow-stone-400 active:opacity-50 transition-all"
+                    onClick={handleSave}
+                >
+                    保存
+                </button>
+            </div>
+
+            <LoadingDialog open={loading} onClose={() => setLoading(false)} />
         </div>
     );
 }

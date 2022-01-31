@@ -11,7 +11,7 @@ const Layout: FC<LayoutProps> = ({ children, title }) => {
             <header className="bg-slate-700 text-white px-4 py-1">
                 <span className="text-sm">
                     <Link href="/">
-                        <a>SRC-MD</a>
+                        <a>MEMO-MD</a>
                     </Link>
                 </span>
             </header>
